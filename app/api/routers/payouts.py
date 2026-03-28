@@ -2,16 +2,35 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from supabase import Client
 
 from app.database import get_supabase_client
 from app.schemas.payouts import PayoutResponse
 from app.services import payout_service
+from app.services.payments_client import get_payments_client
 
 router = APIRouter()
 
 SupabaseDep = Annotated[Client, Depends(get_supabase_client)]
+
+
+@router.get("/payments-health")
+async def payments_health() -> dict[str, str]:
+    """Probe the external MP transfer microservice (no auth on upstream /health)."""
+    client = get_payments_client()
+    if client is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Servicio de pagos no configurado",
+        )
+    healthy = await client.health()
+    if not healthy:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Servicio de pagos no disponible",
+        )
+    return {"payments_service": "ok"}
 
 
 @router.get("/", response_model=list[PayoutResponse])
