@@ -1,3 +1,7 @@
+import logging
+from contextlib import asynccontextmanager
+from urllib.parse import urlparse
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
@@ -11,11 +15,46 @@ from app.api.routers import (
     wallets,
     webhooks,
 )
-from app.config import get_settings
+from app.config import get_settings, resolve_payments_service_config
+from app.services.payments_client import PaymentsClient, set_payments_client
 
-app = FastAPI(title="Alias Payments API")
+logger = logging.getLogger(__name__)
 
-_PUBLIC_PATHS = frozenset({"/", "/docs", "/openapi.json", "/redoc"})
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    pay_url, pay_key, pay_timeout, pay_verify_ssl = resolve_payments_service_config()
+    client: PaymentsClient | None = None
+    if pay_url and pay_key:
+        logger.info(
+            "MP payments client enabled (host=%s, verify_ssl=%s)",
+            urlparse(pay_url).hostname or pay_url,
+            pay_verify_ssl,
+        )
+        client = PaymentsClient(
+            base_url=pay_url,
+            api_key=pay_key,
+            timeout=float(pay_timeout),
+            verify_ssl=pay_verify_ssl,
+        )
+    set_payments_client(client)
+    try:
+        yield
+    finally:
+        if client is not None:
+            await client.close()
+        set_payments_client(None)
+
+
+app = FastAPI(title="Alias Payments API", lifespan=lifespan)
+
+_PUBLIC_PATHS = frozenset({
+    "/",
+    "/docs",
+    "/openapi.json",
+    "/redoc",
+    "/payouts/payments-health",
+})
 
 
 @app.middleware("http")
