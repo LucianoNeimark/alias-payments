@@ -1,6 +1,6 @@
 # Alias Payments
 
-FastAPI skeleton for payments-related APIs.
+FastAPI skeleton for payment-related APIs.
 
 ## Setup
 
