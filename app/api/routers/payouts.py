@@ -1,0 +1,55 @@
+"""Payout HTTP routes."""
+
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Header, Query
+from supabase import Client
+
+from app.database import get_supabase_client
+from app.schemas.payouts import PayoutResponse
+from app.services import payout_service
+
+router = APIRouter()
+
+SupabaseDep = Annotated[Client, Depends(get_supabase_client)]
+
+
+@router.get("/", response_model=list[PayoutResponse])
+def list_payouts(
+    client: SupabaseDep,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    payment_request_id: Annotated[
+        str | None, Query(description="Filter by payment request id")
+    ] = None,
+) -> list[PayoutResponse]:
+    return payout_service.list_payouts(
+        client,
+        limit=limit,
+        offset=offset,
+        payment_request_id=payment_request_id,
+    )
+
+
+@router.get("/{payout_id}", response_model=PayoutResponse)
+def get_payout(payout_id: str, client: SupabaseDep) -> PayoutResponse:
+    return payout_service.get_payout(client, payout_id)
+
+
+@router.post("/{payout_id}/execute", response_model=PayoutResponse)
+async def execute_payout(
+    payout_id: str,
+    client: SupabaseDep,
+    x_mock_failure: Annotated[str | None, Header(alias="X-Mock-Failure")] = None,
+    x_mock_manual_review: Annotated[
+        str | None, Header(alias="X-Mock-Manual-Review")
+    ] = None,
+) -> PayoutResponse:
+    force_failure = (x_mock_failure or "").lower() in ("1", "true", "yes")
+    force_manual = (x_mock_manual_review or "").lower() in ("1", "true", "yes")
+    return await payout_service.execute_payout(
+        client,
+        payout_id,
+        force_failure=force_failure,
+        force_manual_review=force_manual,
+    )
