@@ -41,6 +41,20 @@ def list_orders_by_user(
     return list(response.data or [])
 
 
+def get_order_by_provider_payment_id(
+    client: Client, provider_payment_id: str
+) -> dict[str, Any] | None:
+    response = (
+        client.table("funding_orders")
+        .select("*")
+        .eq("provider_payment_id", provider_payment_id)
+        .limit(1)
+        .execute()
+    )
+    rows = response.data or []
+    return rows[0] if rows else None
+
+
 def update_order_status(
     client: Client,
     order_id: str,

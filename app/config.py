@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     supabase_key: str
     database_url: str
 
+    talo_user_id: str
+    talo_client_id: str
+    talo_client_secret: str
+    talo_base_url: str = "https://sandbox-api.talo.com.ar"
+    talo_webhook_url: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:

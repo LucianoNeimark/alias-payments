@@ -20,11 +20,11 @@ SupabaseDep = Annotated[Client, Depends(get_supabase_client)]
     response_model=FundingOrderResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_funding_order(
+async def create_funding_order(
     payload: FundingOrderCreate,
     client: SupabaseDep,
 ) -> FundingOrderResponse:
-    return funding_service.create_funding_order(client, payload)
+    return await funding_service.create_funding_order(client, payload)
 
 
 @router.get("/", response_model=list[FundingOrderResponse])
