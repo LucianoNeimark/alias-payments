@@ -15,8 +15,8 @@ SupabaseDep = Annotated[Client, Depends(get_supabase_client)]
 
 
 @router.post("/talo", response_model=FundingEventResponse)
-def talo_webhook(
+async def talo_webhook(
     body: TaloWebhookPayload,
     client: SupabaseDep,
 ) -> FundingEventResponse:
-    return webhook_service.process_talo_webhook(client, body)
+    return await webhook_service.process_talo_webhook(client, body)

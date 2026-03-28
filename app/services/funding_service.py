@@ -1,10 +1,11 @@
 """Funding order domain service."""
 
-from decimal import Decimal
+from uuid import uuid4
 
 from fastapi import HTTPException, status
 from supabase import Client
 
+from app.config import get_settings
 from app.repositories import funding_order_repository, user_repository, wallet_repository
 from app.schemas.funding import (
     FundingOrderCreate,
@@ -18,7 +19,7 @@ def _order_response(row: dict) -> FundingOrderResponse:
     return FundingOrderResponse.model_validate(row)
 
 
-def create_funding_order(
+async def create_funding_order(
     client: Client, payload: FundingOrderCreate
 ) -> FundingOrderResponse:
     uid = str(payload.user_id)
@@ -34,8 +35,14 @@ def create_funding_order(
             detail="Wallet not found for user",
         )
 
-    talo = talo_client.create_payment(
-        uid, payload.requested_amount, payload.currency
+    external_id = str(uuid4())
+    settings = get_settings()
+
+    talo = await talo_client.create_payment(
+        amount=payload.requested_amount,
+        currency=payload.currency,
+        external_id=external_id,
+        webhook_url=settings.talo_webhook_url,
     )
 
     row_data = {

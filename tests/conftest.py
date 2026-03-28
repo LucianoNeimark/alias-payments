@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import time
 import uuid
 from collections import defaultdict
 
@@ -77,7 +79,9 @@ def fund_wallet(
     user_id: str,
     amount: float,
 ) -> dict:
-    """Create a funding order + simulate webhook credit for the given amount."""
+    """Create a funding order + simulate faucet + webhook credit for the given amount."""
+    from app.services import talo_client
+
     resp = client.post(
         "/funding-orders",
         json={
@@ -90,14 +94,26 @@ def fund_wallet(
     order = resp.json()
     track(created_ids, "funding_orders", order["id"])
 
-    event_id = f"evt_{uuid.uuid4().hex[:12]}"
+    cvu = order["cvu"]
+    payment_id = order["provider_payment_id"]
+
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(talo_client.simulate_faucet(cvu, amount))
+
+    for _ in range(15):
+        time.sleep(2)
+        payment_data = loop.run_until_complete(talo_client.get_payment(payment_id))
+        if payment_data.get("payment_status") != "PENDING":
+            break
+
+    loop.close()
+
     resp = client.post(
         "/webhooks/talo",
         json={
-            "provider_event_id": event_id,
-            "funding_order_id": order["id"],
-            "status": "SUCCESS",
-            "received_amount": amount,
+            "message": "Pago Actualizado",
+            "paymentId": payment_id,
+            "externalId": payment_id,
         },
     )
     assert resp.status_code == 200, resp.text

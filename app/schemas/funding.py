@@ -56,10 +56,8 @@ class FundingEventResponse(BaseModel):
 
 
 class TaloWebhookPayload(BaseModel):
-    """Mock Talo webhook body; adjust when integrating real Talo."""
+    """Real Talo webhook body: {message, paymentId, externalId}."""
 
-    provider_event_id: str = Field(..., min_length=1)
-    funding_order_id: UUID
-    status: str = Field(..., min_length=1)
-    received_amount: Decimal = Field(..., ge=0)
-    raw_payload: dict[str, Any] | None = None
+    message: str
+    paymentId: str = Field(..., min_length=1)  # noqa: N815
+    externalId: str = Field(..., min_length=1)  # noqa: N815
