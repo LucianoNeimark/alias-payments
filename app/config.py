@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     supabase_url: str
     supabase_key: str
     database_url: str
+    agentpay_api_key: str | None = None
 
 
 @lru_cache
