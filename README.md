@@ -62,3 +62,77 @@ Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) for interactive AP
 - `app/repositories/` — Supabase table access
 - `app/api/routers/` — HTTP routes
 - `app/services/` — domain services
+- `mcp/` — MCP server (see below)
+
+---
+
+## MCP Server
+
+A hosted MCP server that exposes AgentPay tools to AI agents over HTTP using the [Streamable HTTP transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http).
+
+### Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_balance` | Query available and reserved balance for a user's wallet |
+| `request_payment` | Create a payment request to a destination CVU |
+| `get_payment_request` | Check the current status of a payment request |
+| `list_payment_requests` | List payment requests for a user |
+| `get_agent_config` | Get agent configuration (limits, active status) |
+
+### Run locally
+
+```bash
+cd mcp
+pip install -r requirements.txt
+python server.py
+```
+
+The server starts on `http://0.0.0.0:8001/mcp` by default. Make sure the FastAPI backend is running on port 8000 (or set `AGENTPAY_API_URL`).
+
+### Environment variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCP_HOST` | MCP server bind host | `0.0.0.0` |
+| `MCP_PORT` | MCP server bind port | `8001` |
+| `AGENTPAY_API_URL` | FastAPI backend URL | `http://localhost:8000` |
+| `AGENTPAY_API_KEY` | API key for backend authentication | (none) |
+
+### Connect from Claude Desktop
+
+Add to your Claude Desktop config (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "agentpay": {
+      "url": "https://<mcp-service>.railway.app/mcp"
+    }
+  }
+}
+```
+
+### Connect from any MCP HTTP-compatible agent
+
+Any agent that supports MCP Streamable HTTP transport can connect using:
+
+```
+URL:  https://<mcp-service>.railway.app/mcp
+```
+
+### Deploy on Railway
+
+The project is designed for two Railway services from the same repo:
+
+1. **Backend (FastAPI)** — uses the root `Dockerfile` and `railway.toml`.
+   - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+
+2. **MCP Server** — create a second service in Railway pointing to the same repo:
+   - Root directory: `/mcp`
+   - Dockerfile path: `mcp/Dockerfile`
+   - Set env var `AGENTPAY_API_URL` to the backend's internal URL (Railway private networking):
+     `http://<backend-service>.railway.internal:<PORT>`
+   - Set env var `AGENTPAY_API_KEY` matching the backend's `AGENTPAY_API_KEY`
+
+The MCP server will be publicly accessible at `https://<mcp-service>.railway.app/mcp`.
