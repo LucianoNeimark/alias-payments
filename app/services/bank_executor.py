@@ -34,10 +34,6 @@ class BankTransferResult:
     needs_manual_review: bool = False
 
 
-def _amount_to_pesos_int(amount: Decimal) -> int:
-    return int(amount)
-
-
 async def run_transfer(
     *,
     amount: Decimal,
@@ -74,12 +70,11 @@ async def run_transfer(
             needs_manual_review=False,
         )
 
-    pesos = _amount_to_pesos_int(amount)
-    if pesos <= 0:
+    if amount <= 0:
         return BankTransferResult(
             success=False,
             executor_run_id=f"run_{uuid4().hex[:12]}",
-            failure_reason="Amount must be positive integer ARS",
+            failure_reason="Amount must be greater than zero ARS",
             needs_manual_review=False,
         )
 
@@ -88,13 +83,13 @@ async def run_transfer(
     logger.info(
         "bank_executor: MP service transfer start run_id=%s amount=%s alias=%s...",
         run_id,
-        pesos,
+        amount,
         alias[:8],
     )
 
     async with _executor_lock:
         try:
-            resp = await transfer_with_retry(client, alias, pesos)
+            resp = await transfer_with_retry(client, alias, amount)
         except PaymentsServiceError as e:
             elapsed = time.perf_counter() - t0
             logger.warning(

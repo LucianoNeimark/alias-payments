@@ -41,18 +41,37 @@ def get_by_idempotency_key(
 
 
 def list_by_user_id(
-    client: Client, user_id: str, limit: int, offset: int
+    client: Client,
+    user_id: str,
+    limit: int,
+    offset: int,
+    *,
+    status: str | None = None,
 ) -> list[dict[str, Any]]:
     end = max(offset + limit - 1, offset)
-    response = (
+    q = (
         client.table("payment_requests")
         .select("*")
         .eq("user_id", user_id)
         .order("created_at", desc=True)
-        .range(offset, end)
+    )
+    if status is not None:
+        q = q.eq("status", status)
+    response = q.range(offset, end).execute()
+    return list(response.data or [])
+
+
+def count_by_user_id_and_status(
+    client: Client, user_id: str, status: str
+) -> int:
+    response = (
+        client.table("payment_requests")
+        .select("*", count="exact")
+        .eq("user_id", user_id)
+        .eq("status", status)
         .execute()
     )
-    return list(response.data or [])
+    return int(response.count or 0)
 
 
 def update_payment_request(

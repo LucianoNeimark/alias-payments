@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     supabase_key: str
     database_url: str
     agentpay_api_key: str | None = None
+    # JWT secret from Supabase project Settings → API → JWT Settings (for verifying user access tokens)
+    supabase_jwt_secret: str | None = None
+    # Comma-separated origins for the Next.js dashboard (CORS)
+    dashboard_cors_origins: str = "http://localhost:3000"
+    # Background poller: seconds between scans for queued payouts
+    payout_poll_interval: int = 60
 
     talo_user_id: str
     talo_client_id: str

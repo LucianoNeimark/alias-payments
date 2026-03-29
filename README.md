@@ -54,13 +54,54 @@ Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) for interactive AP
 | POST | `/payouts/{id}/execute` | Run bank executor (mock); headers `X-Mock-Failure`, `X-Mock-Manual-Review` |
 | GET | `/ledger/{wallet_id}` | Ledger history for a wallet |
 
+### Dashboard auth (Supabase JWT)
+
+When `AGENTPAY_API_KEY` is set, requests must send **`X-API-Key`** (MCP/agents) **or** a valid
+**`Authorization: Bearer <access_token>`** from Supabase Auth (dashboard).
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/me` | Current user, wallet, agents, recent activity |
+| GET | `/me/stats` | Aggregated counts for widgets |
+| GET | `/me/activity` | Recent payment requests + payouts |
+| GET | `/me/payment-requests` | List (optional `status` query) |
+| GET | `/me/payment-requests/{id}` | Get one (owner only) |
+| GET | `/me/payment-requests/{id}/approvals` | Approval history |
+| POST | `/me/payment-requests/{id}/approve` | Approve (body optional `approved_amount`, `decision_reason`) |
+| POST | `/me/payment-requests/{id}/reject` | Reject |
+| GET | `/me/agents` | List agents |
+| PATCH | `/me/agents/{id}` | Update agent (owner only) |
+| GET | `/me/payouts` | List payouts for your requests |
+| POST | `/me/payouts/{id}/retry` | Retry payout (owner only) |
+| GET | `/me/funding-orders` | List funding orders |
+| GET | `/me/ledger` | Ledger for your wallet |
+
+Set **`SUPABASE_JWT_SECRET`** (Supabase → Settings → API → JWT) so the API can verify user tokens.
+Set **`DASHBOARD_CORS_ORIGINS`** (comma-separated) for the Next.js app origin(s).
+
+## User dashboard (Next.js)
+
+The `dashboard/` app is a separate Next.js 14 UI:
+
+```bash
+cd dashboard
+cp .env.local.example .env.local
+# set NEXT_PUBLIC_SUPABASE_* and NEXT_PUBLIC_API_URL
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). Sign in with Supabase Auth; the app user must exist
+(`POST /users/register` with `auth_provider_user_id` = Supabase user id).
+
 ## Layout
 
 - `app/main.py` — FastAPI app and router registration
 - `app/config.py` / `app/database.py` — settings and Supabase client
 - `app/schemas/` — Pydantic request/response models
 - `app/repositories/` — Supabase table access
-- `app/api/routers/` — HTTP routes
+- `app/api/routers/` — HTTP routes  
+- `dashboard/` — Next.js operator dashboard (Supabase Auth + `/me` API)
 - `app/services/` — domain services
 - `mcp/` — MCP server (see below)
 

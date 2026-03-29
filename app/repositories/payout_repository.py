@@ -37,6 +37,20 @@ def get_latest_for_payment_request(
     return rows[0] if rows else None
 
 
+def list_queued_payouts(client: Client, limit: int = 20) -> list[dict[str, Any]]:
+    """Payouts waiting for execution, oldest first."""
+    capped = max(limit, 1)
+    response = (
+        client.table("payouts")
+        .select("*")
+        .eq("status", "queued")
+        .order("created_at", desc=False)
+        .limit(capped)
+        .execute()
+    )
+    return list(response.data or [])
+
+
 def list_payouts(
     client: Client,
     limit: int,
@@ -53,6 +67,38 @@ def list_payouts(
         q = q.eq("payment_request_id", payment_request_id)
     response = q.range(offset, end).execute()
     return list(response.data or [])
+
+
+def list_payouts_for_user(
+    client: Client, user_id: str, limit: int, offset: int
+) -> list[dict[str, Any]]:
+    """Payout rows for payment requests owned by ``user_id`` (inner join)."""
+    end = max(offset + limit - 1, offset)
+    response = (
+        client.table("payouts")
+        .select("*, payment_requests!inner(user_id)")
+        .eq("payment_requests.user_id", user_id)
+        .order("created_at", desc=True)
+        .range(offset, end)
+        .execute()
+    )
+    rows: list[dict[str, Any]] = list(response.data or [])
+    for row in rows:
+        row.pop("payment_requests", None)
+    return rows
+
+
+def count_for_user_by_status(
+    client: Client, user_id: str, payout_status: str
+) -> int:
+    response = (
+        client.table("payouts")
+        .select("id, payment_requests!inner(user_id)", count="exact")
+        .eq("payment_requests.user_id", user_id)
+        .eq("status", payout_status)
+        .execute()
+    )
+    return int(response.count or 0)
 
 
 def update_payout(

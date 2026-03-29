@@ -33,6 +33,27 @@ def list_agents_by_user_id(client: Client, user_id: str) -> list[dict[str, Any]]
     return list(response.data or [])
 
 
+def count_agents_for_user(client: Client, user_id: str) -> int:
+    response = (
+        client.table("agents")
+        .select("*", count="exact")
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return int(response.count or 0)
+
+
+def count_active_agents_for_user(client: Client, user_id: str) -> int:
+    response = (
+        client.table("agents")
+        .select("*", count="exact")
+        .eq("user_id", user_id)
+        .eq("is_active", True)
+        .execute()
+    )
+    return int(response.count or 0)
+
+
 def update_agent(
     client: Client, agent_id: str, patch: dict[str, Any]
 ) -> dict[str, Any] | None:

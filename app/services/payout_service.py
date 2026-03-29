@@ -208,6 +208,16 @@ def list_payouts(
     return [_payout_response(r) for r in rows]
 
 
+def list_payouts_for_user(
+    client: Client, user_id: str, limit: int = 50, offset: int = 0
+) -> list[PayoutResponse]:
+    capped = min(max(limit, 1), 100)
+    rows = payout_repository.list_payouts_for_user(
+        client, user_id, capped, max(offset, 0)
+    )
+    return [_payout_response(r) for r in rows]
+
+
 async def retry_payout(
     client: Client,
     payout_id: str,

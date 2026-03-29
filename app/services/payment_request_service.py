@@ -142,7 +142,12 @@ def get_payment_request(client: Client, payment_request_id: str) -> PaymentReque
 
 
 def list_payment_requests_for_user(
-    client: Client, user_id: str, limit: int = 50, offset: int = 0
+    client: Client,
+    user_id: str,
+    limit: int = 50,
+    offset: int = 0,
+    *,
+    filter_status: str | None = None,
 ) -> list[PaymentRequestResponse]:
     if not user_repository.get_user_by_id(client, user_id):
         raise HTTPException(
@@ -151,7 +156,7 @@ def list_payment_requests_for_user(
         )
     capped = min(max(limit, 1), 100)
     rows = payment_request_repository.list_by_user_id(
-        client, user_id, capped, max(offset, 0)
+        client, user_id, capped, max(offset, 0), status=filter_status
     )
     return [_response(r) for r in rows]
 

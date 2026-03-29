@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import ssl
+from decimal import ROUND_HALF_UP, Decimal
 
 import certifi
 import httpx
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class PaymentTransferRequest(BaseModel):
     alias: str
-    amount: int
+    amount: float
 
 
 class PaymentTransferResponse(BaseModel):
@@ -67,10 +68,13 @@ class PaymentsClient:
             verify=ssl_context,
         )
 
-    async def transfer(self, alias: str, amount: int) -> PaymentTransferResponse:
+    async def transfer(self, alias: str, amount: Decimal) -> PaymentTransferResponse:
+        payload = float(
+            amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+        )
         resp = await self._client.post(
             "/transfer",
-            json={"alias": alias, "amount": amount},
+            json={"alias": alias, "amount": payload},
         )
         if resp.status_code != 200:
             detail = _error_detail(resp)
@@ -104,7 +108,7 @@ def _error_detail(resp: httpx.Response) -> str:
 async def transfer_with_retry(
     client: PaymentsClient,
     alias: str,
-    amount: int,
+    amount: Decimal,
     *,
     max_409_retries: int = 3,
 ) -> PaymentTransferResponse:

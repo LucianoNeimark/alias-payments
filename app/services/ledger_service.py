@@ -1,6 +1,6 @@
 """Ledger domain service: entries and wallet balance updates."""
 
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import HTTPException, status
 from supabase import Client
@@ -20,6 +20,11 @@ def _decimal(val) -> Decimal:
     if isinstance(val, Decimal):
         return val
     return Decimal(str(val))
+
+
+def _money(minor_units: Decimal) -> Decimal:
+    """Two decimal places for wallet math (avoids float/DB drift on reserve vs payout)."""
+    return minor_units.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def _compute_ledger_row(
@@ -54,10 +59,15 @@ def record_entry(client: Client, payload: LedgerCreateInternal) -> LedgerEntryRe
     if not wallet:
         raise ValueError("Wallet not found")
 
-    available = _decimal(wallet.get("available_balance"))
-    reserved = _decimal(wallet.get("reserved_balance"))
+    available = _money(_decimal(wallet.get("available_balance")))
+    reserved = _money(_decimal(wallet.get("reserved_balance")))
+    payload = payload.model_copy(
+        update={"amount": _money(_decimal(payload.amount))}
+    )
     new_av, new_res, direction = _compute_ledger_row(available, reserved, payload)
 
+    new_av = _money(new_av)
+    new_res = _money(new_res)
     if new_av < 0 or new_res < 0:
         raise ValueError(
             "Operation would result in negative balance; insufficient funds or invalid state"
