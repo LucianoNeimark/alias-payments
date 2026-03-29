@@ -72,3 +72,22 @@ async def execute_payout(
         force_failure=force_failure,
         force_manual_review=force_manual,
     )
+
+
+@router.post("/{payout_id}/retry", response_model=PayoutResponse)
+async def retry_payout(
+    payout_id: str,
+    client: SupabaseDep,
+    x_mock_failure: Annotated[str | None, Header(alias="X-Mock-Failure")] = None,
+    x_mock_manual_review: Annotated[
+        str | None, Header(alias="X-Mock-Manual-Review")
+    ] = None,
+) -> PayoutResponse:
+    force_failure = (x_mock_failure or "").lower() in ("1", "true", "yes")
+    force_manual = (x_mock_manual_review or "").lower() in ("1", "true", "yes")
+    return await payout_service.retry_payout(
+        client,
+        payout_id,
+        force_failure=force_failure,
+        force_manual_review=force_manual,
+    )

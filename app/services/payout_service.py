@@ -208,6 +208,51 @@ def list_payouts(
     return [_payout_response(r) for r in rows]
 
 
+async def retry_payout(
+    client: Client,
+    payout_id: str,
+    *,
+    force_failure: bool = False,
+    force_manual_review: bool = False,
+) -> PayoutResponse:
+    """Re-queue a needs_manual_review or failed payout and execute it again."""
+    payout = payout_repository.get_by_id(client, payout_id)
+    if not payout:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payout not found",
+        )
+
+    retryable = {PayoutStatus.NEEDS_MANUAL_REVIEW.value, PayoutStatus.FAILED.value}
+    if payout.get("status") not in retryable:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Only payouts in {retryable} can be retried, current: {payout.get('status')}",
+        )
+
+    pr_id = str(payout["payment_request_id"])
+    pr = payment_request_repository.get_by_id(client, pr_id)
+    if not pr:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment request not found for payout",
+        )
+
+    payout_repository.update_payout(
+        client, payout_id, {"status": PayoutStatus.QUEUED.value, "failure_reason": None}
+    )
+    payment_request_repository.update_payment_request(
+        client, pr_id, {"status": PaymentRequestStatus.RESERVED.value}
+    )
+
+    return await execute_payout(
+        client,
+        payout_id,
+        force_failure=force_failure,
+        force_manual_review=force_manual_review,
+    )
+
+
 def get_payout(client: Client, payout_id: str) -> PayoutResponse:
     row = payout_repository.get_by_id(client, payout_id)
     if not row:
