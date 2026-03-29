@@ -1,7 +1,6 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowRight } from "lucide-react"
 import { TerminalWindow } from "./terminal-window"
 import { useState, useEffect } from "react"
 
@@ -13,20 +12,20 @@ function RotatingWord() {
   useEffect(() => {
     const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % rotatingWords.length)
-    }, 2000)
+    }, 2200)
     return () => clearInterval(timer)
   }, [])
 
   return (
-    <span className="inline-block relative">
+    <span className="relative inline-block overflow-hidden" style={{ minWidth: "12ch" }}>
       <AnimatePresence mode="wait">
         <motion.span
           key={rotatingWords[index]}
-          initial={{ y: 40, opacity: 0, rotateX: -90 }}
-          animate={{ y: 0, opacity: 1, rotateX: 0 }}
-          exit={{ y: -40, opacity: 0, rotateX: 90 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="shimmer-text inline-block"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          className="text-[#6B4C2A] leading-[inherit]"
         >
           {rotatingWords[index]}
         </motion.span>
@@ -36,14 +35,13 @@ function RotatingWord() {
 }
 
 const letterVariants = {
-  hidden: { opacity: 0, y: 80, rotateX: -90 },
+  hidden: { opacity: 0, y: 60 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    rotateX: 0,
     transition: {
-      delay: i * 0.04,
-      duration: 0.6,
+      delay: i * 0.03,
+      duration: 0.5,
       ease: [0.215, 0.61, 0.355, 1],
     },
   }),
@@ -71,86 +69,50 @@ function AnimatedHeadline({ text, startDelay = 0 }: { text: string; startDelay?:
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center pt-24 pb-16 px-6 overflow-hidden">
-      {/* Massive glow orb */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] lg:w-[900px] lg:h-[900px]">
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/30 via-accent/20 to-secondary/30 blur-[120px] pulse-glow" />
-      </div>
-
-      <div className="mx-auto max-w-7xl w-full relative">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div>
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
-              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full animated-border mb-8"
+    <section className="relative h-screen flex flex-col justify-center px-6 sm:px-10 overflow-hidden">
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse 55% 60% at 30% 50%, rgba(245,240,232,0.92) 0%, rgba(245,240,232,0) 100%)",
+        }}
+      />
+      <div className="mx-auto max-w-[1400px] w-full relative">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-12 lg:gap-20">
+          <div className="lg:flex-[1.1] lg:min-w-0">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-sm font-mono text-[#8B8177] tracking-wider uppercase mb-6"
             >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary" />
-              </span>
-              <span className="text-sm text-muted-foreground font-medium tracking-wide">
-                Fintech Infrastructure · Argentina
-              </span>
-            </motion.div>
+              Infraestructura financiera para agentes
+            </motion.p>
 
-            {/* Headline */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-[5.5rem] font-bold leading-[1.1] tracking-tight mb-6">
+            <h1 className="text-[2.75rem] sm:text-[3.5rem] lg:text-[4.25rem] xl:text-[5rem] font-extrabold leading-[1.05] tracking-[-0.03em] mb-6 text-[#1A1A1A]">
               <span className="block">
-                <AnimatedHeadline text="El CVU de los" />
+                <AnimatedHeadline text="Agentes que" />
               </span>
-              <span className="block mt-[0.1em]">
-                <AnimatedHeadline text="agentes que" startDelay={14} />
-              </span>
-              <span className="block mt-[0.1em] whitespace-nowrap">
-                <AnimatedHeadline text="saben " startDelay={25} />
-                <span className="inline-block translate-y-[-0.18em]">
-                  <RotatingWord />
-                </span>
+              <span className="block whitespace-nowrap">
+                <AnimatedHeadline text="saben " startDelay={12} />
+                <RotatingWord />
               </span>
             </h1>
 
-            {/* Subheadline */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 1 }}
-              className="text-lg sm:text-xl text-muted-foreground max-w-xl mb-10 leading-relaxed"
+              className="text-base sm:text-[1.125rem] text-[#6B6560] max-w-md mb-10 leading-[1.7]"
             >
               Dales a tus agentes una cuenta real. Saldo en pesos, CVU propio,
               transferencias autónomas. Dentro de los límites que vos definís.
             </motion.p>
 
-            {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1.2 }}
-              className="flex flex-col sm:flex-row gap-4 mb-10"
-            >
-              <motion.button
-                whileHover={{ scale: 1.03, boxShadow: "0 0 40px rgba(124,58,237,0.4)" }}
-                whileTap={{ scale: 0.97 }}
-                className="group relative px-8 py-4 rounded-xl text-base font-semibold text-foreground overflow-hidden"
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-primary via-accent to-secondary rounded-xl" />
-                <span className="absolute inset-0 bg-gradient-to-r from-primary via-accent to-secondary rounded-xl opacity-0 group-hover:opacity-100 blur-2xl transition-opacity duration-700" />
-                <span className="relative flex items-center justify-center gap-2">
-                  Conectar mi agente
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-300" />
-                </span>
-              </motion.button>
-
-            </motion.div>
-
-            {/* Stats instead of checkmarks */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 1.5 }}
-              className="flex gap-8"
+              transition={{ duration: 0.6, delay: 1.4 }}
+              className="flex items-center gap-0"
             >
               {[
                 { value: "MCP", label: "Nativo" },
@@ -159,32 +121,65 @@ export function HeroSection() {
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.5 + i * 0.15 }}
-                  className="flex flex-col"
+                  transition={{ delay: 1.4 + i * 0.1 }}
+                  className="flex flex-col pr-8 last:pr-0 border-r border-[#1A1A1A]/10 last:border-r-0 mr-8 last:mr-0"
                 >
-                  <span className="text-2xl font-bold gradient-text">{stat.value}</span>
-                  <span className="text-xs text-muted-foreground mt-0.5">{stat.label}</span>
+                  <span className="text-lg sm:text-xl font-bold text-[#1A1A1A] font-mono">{stat.value}</span>
+                  <span className="text-[11px] text-[#8B8177] mt-1 uppercase tracking-[0.15em]">{stat.label}</span>
                 </motion.div>
               ))}
             </motion.div>
           </div>
 
-          {/* Terminal */}
+          {/* Right: Terminal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.8, rotateY: -15 }}
-            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            transition={{ duration: 1, delay: 0.5, ease: [0.215, 0.61, 0.355, 1] }}
-            className="relative hidden lg:block"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.6, ease: [0.215, 0.61, 0.355, 1] }}
+            className="relative hidden lg:block lg:flex-1 lg:min-w-0"
           >
-            <div className="relative float-animation" style={{ perspective: "1000px" }}>
-              <div className="absolute -inset-8 bg-gradient-to-r from-primary/20 via-accent/10 to-secondary/20 rounded-3xl blur-3xl pulse-glow" />
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 1.8 }}
+              className="flex items-center gap-2 mb-3 ml-1"
+            >
+              <span className="text-[13px] font-mono text-[#8B8177]">
+                Sos un agente? Instalá el skill
+              </span>
+              <motion.span
+                animate={{ y: [0, 4, 0] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                className="text-[#A89880] text-sm"
+              >
+                ↓
+              </motion.span>
+            </motion.div>
+            <div className="relative float-animation">
               <TerminalWindow />
             </div>
           </motion.div>
         </div>
       </div>
+
+      {/* Bottom line */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2, duration: 1 }}
+        className="absolute bottom-0 left-0 right-0 border-t border-[#1A1A1A]/8"
+      >
+        <div className="mx-auto max-w-[1400px] px-6 sm:px-10 py-4 flex items-center justify-between">
+          <span className="text-[11px] text-[#8B8177] tracking-[0.2em] uppercase font-mono">
+            Alias
+          </span>
+          <span className="text-[11px] text-[#8B8177] tracking-[0.2em] uppercase font-mono">
+            Buenos Aires, Argentina
+          </span>
+        </div>
+      </motion.div>
     </section>
   )
 }

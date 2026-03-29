@@ -2,108 +2,118 @@
 
 import { useEffect, useRef } from "react"
 
+const WORDS_A = [
+  "hamaca", "perro", "mate", "vaso", "luna", "tango", "rio", "cielo",
+  "fuego", "plata", "dulce", "campo", "asado", "barco", "nube", "sol",
+  "arbol", "carta", "gato", "libro", "mesa", "piedra", "reloj", "viento",
+  "agua", "flor", "puerta", "trigo", "bici", "farol", "globo", "hoja",
+  "jaula", "kiosko", "leche", "mango", "nariz", "oveja", "pasto", "queso",
+]
+
+const WORDS_B = [
+  "compu", "hambre", "zapato", "silla", "pared", "techo", "llave", "torta",
+  "trueno", "humo", "hierro", "cobre", "nieve", "rayo", "sombra", "chispa",
+  "crema", "polvo", "tinta", "menta", "coral", "bruma", "seda", "lana",
+  "fibra", "calma", "brisa", "pulso", "ritmo", "trazo", "ancla", "faro",
+  "nudo", "ola", "canto", "marca", "surco", "raiz", "borde", "grano",
+]
+
+const WORDS_C = [
+  "auto", "helado", "heladera", "guitarra", "ventana", "estrella", "cuadro",
+  "espejo", "alfombra", "timbre", "moneda", "antena", "ladrillo", "botella",
+  "linterna", "campana", "escalera", "almohada", "bandera", "cadena",
+  "diamante", "enchufe", "frazada", "galleta", "herradura", "imprenta",
+  "jardin", "kayak", "lampara", "madera", "naranja", "oceano", "paloma",
+]
+
+function seededRandom(seed: number) {
+  let s = seed
+  return () => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff
+    return s / 0x7fffffff
+  }
+}
+
+function generateAlias(rand: () => number) {
+  const a = WORDS_A[Math.floor(rand() * WORDS_A.length)]
+  const b = WORDS_B[Math.floor(rand() * WORDS_B.length)]
+  const c = WORDS_C[Math.floor(rand() * WORDS_C.length)]
+  return `${a}.${b}.${c}`
+}
+
 export function AuroraBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    let animationId: number
-    let time = 0
+    let animId: number
+    let startTime: number | null = null
+    const speed = 12
 
-    const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+    const setupCanvas = () => {
+      const dpr = window.devicePixelRatio || 1
+      const w = window.innerWidth
+      const h = window.innerHeight
+      canvas.width = w * dpr
+      canvas.height = h * dpr
+      canvas.style.width = `${w}px`
+      canvas.style.height = `${h}px`
+      return { dpr, w, h }
     }
 
-    resize()
-    window.addEventListener("resize", resize)
+    const draw = (timestamp: number) => {
+      if (!startTime) startTime = timestamp
+      const elapsed = (timestamp - startTime) / 1000
 
-    const draw = () => {
-      time += 0.002
+      const { dpr, w, h } = setupCanvas()
+      ctx.scale(dpr, dpr)
+      ctx.clearRect(0, 0, w, h)
 
-      ctx.fillStyle = "#050505"
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      const rand = seededRandom(42)
+      const fontSize = Math.max(12, Math.min(14, w * 0.009))
+      ctx.textAlign = "left"
 
-      const blobs = [
-        {
-          x: canvas.width * 0.25 + Math.sin(time * 0.5) * 150,
-          y: canvas.height * 0.35 + Math.cos(time * 0.3) * 100,
-          radius: 500,
-          color1: "rgba(124, 58, 237, 0.18)",
-          color2: "rgba(124, 58, 237, 0)",
-        },
-        {
-          x: canvas.width * 0.75 + Math.cos(time * 0.4) * 180,
-          y: canvas.height * 0.25 + Math.sin(time * 0.6) * 80,
-          radius: 450,
-          color1: "rgba(6, 182, 212, 0.15)",
-          color2: "rgba(6, 182, 212, 0)",
-        },
-        {
-          x: canvas.width * 0.5 + Math.sin(time * 0.7) * 120,
-          y: canvas.height * 0.6 + Math.cos(time * 0.5) * 140,
-          radius: 550,
-          color1: "rgba(168, 85, 247, 0.12)",
-          color2: "rgba(168, 85, 247, 0)",
-        },
-        {
-          x: canvas.width * 0.15 + Math.cos(time * 0.3) * 80,
-          y: canvas.height * 0.75 + Math.sin(time * 0.4) * 90,
-          radius: 400,
-          color1: "rgba(59, 130, 246, 0.1)",
-          color2: "rgba(59, 130, 246, 0)",
-        },
-        {
-          x: canvas.width * 0.85 + Math.sin(time * 0.6) * 100,
-          y: canvas.height * 0.8 + Math.cos(time * 0.35) * 60,
-          radius: 350,
-          color1: "rgba(16, 185, 129, 0.08)",
-          color2: "rgba(16, 185, 129, 0)",
-        },
-      ]
+      const lineHeight = fontSize * 3.2
+      const colWidth = fontSize * 20
+      const cols = Math.ceil(w / colWidth) + 4
+      const rows = Math.ceil(h / lineHeight) + 4
 
-      blobs.forEach((blob) => {
-        const gradient = ctx.createRadialGradient(
-          blob.x, blob.y, 0,
-          blob.x, blob.y, blob.radius
-        )
-        gradient.addColorStop(0, blob.color1)
-        gradient.addColorStop(1, blob.color2)
+      const offsetX = (elapsed * speed) % colWidth
+      const offsetY = (elapsed * speed * 0.3) % lineHeight
 
-        ctx.beginPath()
-        ctx.fillStyle = gradient
-        ctx.arc(blob.x, blob.y, blob.radius, 0, Math.PI * 2)
-        ctx.fill()
-      })
+      for (let row = -2; row < rows; row++) {
+        for (let col = -2; col < cols; col++) {
+          const alias = generateAlias(rand)
+          const baseX = col * colWidth + (row % 2 === 0 ? 0 : colWidth * 0.5) - offsetX
+          const baseY = row * lineHeight + fontSize - offsetY
+          const jitterX = (rand() - 0.5) * colWidth * 0.15
+          const jitterY = (rand() - 0.5) * lineHeight * 0.15
+          const finalX = baseX + jitterX
+          const finalY = baseY + jitterY
+          const sizeVariation = 0.9 + rand() * 0.2
 
-      animationId = requestAnimationFrame(draw)
+          const baseOpacity = 0.13 + rand() * 0.09
+
+          if (baseOpacity < 0.02) continue
+
+          ctx.font = `400 ${fontSize * sizeVariation}px 'Geist Mono', monospace`
+          ctx.fillStyle = `rgba(100, 85, 60, ${baseOpacity})`
+          ctx.fillText(alias, finalX, finalY)
+        }
+      }
+
+      animId = requestAnimationFrame(draw)
     }
 
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
-    if (!mediaQuery.matches) {
-      draw()
-    } else {
-      ctx.fillStyle = "#050505"
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      
-      const gradient = ctx.createRadialGradient(
-        canvas.width * 0.5, canvas.height * 0.4, 0,
-        canvas.width * 0.5, canvas.height * 0.4, 600
-      )
-      gradient.addColorStop(0, "rgba(124, 58, 237, 0.18)")
-      gradient.addColorStop(1, "rgba(124, 58, 237, 0)")
-      ctx.fillStyle = gradient
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-    }
-
+    animId = requestAnimationFrame(draw)
+    window.addEventListener("resize", () => { startTime = null })
     return () => {
-      window.removeEventListener("resize", resize)
-      cancelAnimationFrame(animationId)
+      cancelAnimationFrame(animId)
+      window.removeEventListener("resize", () => { startTime = null })
     }
   }, [])
 
@@ -111,7 +121,7 @@ export function AuroraBackground() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 -z-10"
-      style={{ background: "#050505" }}
+      style={{ background: "#F5F0E8" }}
     />
   )
 }

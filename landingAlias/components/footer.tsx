@@ -58,35 +58,6 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Links */}
-          <nav className="flex items-center gap-8">
-            <Link
-              href="#docs"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Docs
-            </Link>
-            <Link
-              href="#github"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              GitHub
-            </Link>
-            <Link
-              href="https://twitter.com/alias"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Twitter/X
-            </Link>
-            <Link
-              href="mailto:hello@alias.ar"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              hello@alias.ar
-            </Link>
-          </nav>
         </div>
 
         <div className="mt-12 pt-8 border-t border-border text-center">
