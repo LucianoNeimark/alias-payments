@@ -66,6 +66,7 @@ export function DashboardUserBar() {
   }
 
   async function copyUserId() {
+    if (!me) return;
     try {
       await navigator.clipboard.writeText(me.user.id);
       scheduleCopyFeedback("success");
