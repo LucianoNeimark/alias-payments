@@ -117,8 +117,14 @@ def fund_wallet(
         },
     )
     assert resp.status_code == 200, resp.text
-    event = resp.json()
-    track(created_ids, "funding_events", event["id"])
+
+    from app.database import get_supabase_client
+    from app.repositories import funding_event_repository
+
+    sb = get_supabase_client()
+    event = funding_event_repository.get_event_by_provider_event_id(sb, payment_id)
+    if event:
+        track(created_ids, "funding_events", event["id"])
     return order
 
 
