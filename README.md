@@ -2,6 +2,8 @@
 
 Plataforma de pagos orientada a agentes: API backend, dashboard de operador, servidor MCP y flujos de solicitud, aprobación y transferencia saliente. Landing page: **[https://vigilant-clarity-production.up.railway.app](https://vigilant-clarity-production.up.railway.app)**
 
+Las transferencias pueden tener cierta demora por los proveedores.
+
 ---
 
 ## Guía de demostración
@@ -34,20 +36,22 @@ Una vez en Telegram, entrá al chat del agente usando este enlace:
 
 Ese bot está conectado a un **OpenClaw** desplegado en una instancia **EC2**. El agente ya tiene configuradas las **herramientas MCP** de este proyecto y las **skills** necesarias para operar.
 
-La cuenta del bot está **fondeada por el equipo con $100** (sandbox / demo) para que puedas disparar solicitudes de pago reales del flujo.
+La cuenta del bot está **fondeada por el equipo con aproximadamente $50** (sandbox / demo) para que puedas disparar solicitudes de pago reales del flujo.
 
 ### 4. Interactuar con el agente
 
 En el chat podés pedirle tareas que impliquen un pago, por ejemplo:
 
-- Pedir una **transferencia** a la cuenta de un amigo (CVU/alias según lo que exponga el flujo).
-- Probar el escenario de **compra en la tienda mockeada que creamos para la demo** (El Refugio - Vende Milanesas) para usar el flujo de pago end-to-end.
+- Pedir una **transferencia** a la cuenta de un amigo (recomendamos fuertemente probar de enviar $5 al alias de tu amigo que tenes cerca).
+- Probar el escenario de **compra en la tienda mockeada que creamos para la demo** (El Refugio - Vende Milanesas) para usar el flujo de pago end-to-end. (Este flujo es exacatamente el mismo que se ve en el video de la demo).
 
 El agente usará las tools MCP y las skills de Alias Payments para crear la **solicitud de pago** correspondiente.
 
 ### 5. Aprobar o rechazar la solicitud en el dashboard
 
 Cuando el agente haya creado una solicitud de pago, **no se ejecuta la salida de fondos** hasta que vos la gestiones en el dashboard.
+
+Primero en **Transactions** vas a ver la solicitud de pago pendiente, podes ver el estado de la solicitud y el monto. De ahí podes aprobar o rechazar la solicitud. En el caso de que la solicitud sea aceptada, es encolada. Para forzar la ejecución, ir a **Payouts** y ejecutar el payout.
 
 Abrí el dashboard en:
 
@@ -72,6 +76,6 @@ En el dashboard vas a encontrar:
 
 ### 6. Qué pasa después de aprobar
 
-Cuando **aprobás** la solicitud del agente en **Transactions**, se activa el flujo que **ejecuta la transferencia saliente** hacia el destino configurado en esa solicitud.
+Cuando se ejecuta el **payout**, se activa el flujo que **ejecuta la transferencia saliente** hacia el destino configurado en esa solicitud.
 
 Si **rechazás** la solicitud, ese pago no se completa.
