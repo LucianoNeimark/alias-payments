@@ -169,7 +169,7 @@ export function HeroSection() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2, duration: 1 }}
-        className="absolute bottom-0 left-0 right-0 border-t border-[#1A1A1A]/8"
+        className="absolute bottom-0 left-0 right-0 z-10 border-t border-[#1A1A1A]/8 bg-[#F5F0E8]"
       >
         <div className="mx-auto max-w-[1400px] px-6 sm:px-10 py-4 flex items-center justify-between">
           <span className="text-[11px] text-[#8B8177] tracking-[0.2em] uppercase font-mono">
