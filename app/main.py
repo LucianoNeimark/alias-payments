@@ -85,6 +85,11 @@ _PUBLIC_PATHS = frozenset({
 
 @app.middleware("http")
 async def api_key_middleware(request: Request, call_next):
+    # CORS preflight: no Authorization header; must pass through so CORSMiddleware
+    # can answer with access-control-* headers.
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
     settings = get_settings()
     if settings.agentpay_api_key is None:
         return await call_next(request)
