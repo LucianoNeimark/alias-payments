@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -113,19 +114,22 @@ def create_payment_request(
             detail="Amount exceeds agent default_spending_limit",
         )
 
-    row_data = {
+    row_data: dict[str, Any] = {
         "user_id": uid,
         "agent_id": str(payload.agent_id),
         "wallet_id": str(wallet["id"]),
         "amount": float(payload.amount),
         "currency": payload.currency,
-        "destination_cvu": payload.destination_cvu,
-        "destination_alias": payload.destination_alias,
-        "destination_holder_name": payload.destination_holder_name,
         "purpose": payload.purpose,
         "status": PaymentRequestStatus.REQUESTED.value,
         "idempotency_key": payload.idempotency_key,
     }
+    if payload.destination_cvu is not None:
+        row_data["destination_cvu"] = payload.destination_cvu
+    if payload.destination_alias is not None:
+        row_data["destination_alias"] = payload.destination_alias
+    if payload.destination_holder_name is not None:
+        row_data["destination_holder_name"] = payload.destination_holder_name
 
     row = payment_request_repository.create_payment_request(client, row_data)
     return _response(row)
