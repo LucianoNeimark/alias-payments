@@ -137,7 +137,7 @@ export default function PayoutsPage() {
                       {Number(p.amount).toLocaleString()} {p.currency}
                     </TableCell>
                     <TableCell className="font-mono text-xs max-w-[120px] truncate">
-                      {p.destination_cvu}
+                      {p.destination_cvu || p.destination_alias || "—"}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={p.status} />

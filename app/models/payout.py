@@ -37,7 +37,7 @@ class Payout(Base):
     )
     execution_provider: Mapped[str] = mapped_column(Text, nullable=False)
     source_account_label: Mapped[str | None] = mapped_column(Text, nullable=True)
-    destination_cvu: Mapped[str] = mapped_column(Text, nullable=False)
+    destination_cvu: Mapped[str | None] = mapped_column(Text, nullable=True)
     destination_alias: Mapped[str | None] = mapped_column(Text, nullable=True)
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     currency: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'ARS'"))

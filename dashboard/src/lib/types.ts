@@ -38,7 +38,7 @@ export type PaymentRequest = {
   wallet_id: string;
   amount: string;
   currency: string;
-  destination_cvu: string;
+  destination_cvu: string | null;
   destination_alias: string | null;
   destination_holder_name: string | null;
   purpose: string;
@@ -63,7 +63,7 @@ export type Payout = {
   payment_request_id: string;
   execution_provider: string;
   source_account_label: string | null;
-  destination_cvu: string;
+  destination_cvu: string | null;
   destination_alias: string | null;
   amount: string;
   currency: string;

@@ -227,7 +227,7 @@ export default function TransactionsPage() {
                         {Number(pr.amount).toLocaleString()} {pr.currency}
                       </TableCell>
                       <TableCell className="font-mono text-xs max-w-[140px] truncate">
-                        {pr.destination_cvu}
+                        {pr.destination_cvu || pr.destination_alias || "—"}
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={pr.status} />

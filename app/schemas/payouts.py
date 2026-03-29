@@ -5,7 +5,7 @@ from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class PayoutStatus(StrEnum):
@@ -23,7 +23,7 @@ class PayoutResponse(BaseModel):
     payment_request_id: UUID
     execution_provider: str
     source_account_label: str | None
-    destination_cvu: str
+    destination_cvu: str | None
     destination_alias: str | None
     amount: Decimal
     currency: str
@@ -39,7 +39,15 @@ class PayoutCreateInternal(BaseModel):
     payment_request_id: UUID
     execution_provider: str = "selenium_mercadopago"
     source_account_label: str = "mp_pool_demo"
-    destination_cvu: str = Field(..., min_length=1)
-    destination_alias: str | None = None
+    destination_cvu: str | None = Field(default=None, min_length=1)
+    destination_alias: str | None = Field(default=None, min_length=1)
     amount: Decimal = Field(..., gt=0)
     currency: str = "ARS"
+
+    @model_validator(mode="after")
+    def require_cvu_or_alias(self) -> "PayoutCreateInternal":
+        if not self.destination_cvu and not self.destination_alias:
+            raise ValueError(
+                "Debe proporcionarse al menos uno de destination_cvu o destination_alias."
+            )
+        return self

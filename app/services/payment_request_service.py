@@ -251,21 +251,23 @@ def approve_payment_request(
 
     payout_data = PayoutCreateInternal(
         payment_request_id=UUID(order_id),
-        destination_cvu=row.get("destination_cvu") or "",
-        destination_alias=row.get("destination_alias"),
+        destination_cvu=row.get("destination_cvu") or None,
+        destination_alias=row.get("destination_alias") or None,
         amount=approved_amt,
         currency=str(row.get("currency") or "ARS"),
     )
-    payout_insert = {
+    payout_insert: dict[str, Any] = {
         "payment_request_id": order_id,
         "execution_provider": payout_data.execution_provider,
         "source_account_label": payout_data.source_account_label,
-        "destination_cvu": payout_data.destination_cvu,
-        "destination_alias": payout_data.destination_alias,
         "amount": float(payout_data.amount),
         "currency": payout_data.currency,
         "status": PayoutStatus.QUEUED.value,
     }
+    if payout_data.destination_cvu is not None:
+        payout_insert["destination_cvu"] = payout_data.destination_cvu
+    if payout_data.destination_alias is not None:
+        payout_insert["destination_alias"] = payout_data.destination_alias
     try:
         payout_repository.create_payout(client, payout_insert)
     except Exception as exc:

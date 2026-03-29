@@ -75,7 +75,7 @@ async def execute_payout(
 
     result = await bank_executor.run_transfer(
         amount=amount,
-        destination_cvu=str(payout["destination_cvu"]),
+        destination_cvu=payout.get("destination_cvu") or "",
         destination_alias=payout.get("destination_alias"),
         timeout_seconds=timeout_seconds,
         force_failure=force_failure,
