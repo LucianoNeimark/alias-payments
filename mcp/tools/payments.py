@@ -11,38 +11,46 @@ def register(mcp: FastMCP) -> None:
         user_id: str,
         agent_id: str,
         amount: float,
-        destination_cvu: str,
         purpose: str,
         idempotency_key: str,
         currency: str = "ARS",
+        destination_cvu: str | None = None,
         destination_alias: str | None = None,
         destination_holder_name: str | None = None,
     ) -> dict:
-        """Crear una solicitud de pago a un CVU destino.
+        """Crear una solicitud de pago a un CVU/CBU o alias destino.
 
         La solicitud queda en estado 'requested' hasta que el usuario la apruebe
         o rechace desde la web.
+
+        Debe proporcionarse al menos uno de destination_cvu o destination_alias.
 
         Args:
             user_id: UUID del usuario que financia el pago.
             agent_id: UUID del agente que solicita el pago.
             amount: Monto a pagar (mayor a 0).
-            destination_cvu: CVU o CBU destino.
             purpose: Motivo legible del pago.
             idempotency_key: Clave unica para evitar duplicados.
             currency: Moneda (default ARS).
-            destination_alias: Alias destino (ej: proveedor.demo).
+            destination_cvu: CVU o CBU destino (obligatorio si no se provee destination_alias).
+            destination_alias: Alias destino, ej: proveedor.demo (obligatorio si no se provee destination_cvu).
             destination_holder_name: Nombre del titular destino.
         """
+        if not destination_cvu and not destination_alias:
+            raise ValueError(
+                "Debe proporcionarse al menos uno de destination_cvu o destination_alias."
+            )
+
         payload = {
             "user_id": user_id,
             "agent_id": agent_id,
             "amount": amount,
             "currency": currency,
-            "destination_cvu": destination_cvu,
             "purpose": purpose,
             "idempotency_key": idempotency_key,
         }
+        if destination_cvu is not None:
+            payload["destination_cvu"] = destination_cvu
         if destination_alias is not None:
             payload["destination_alias"] = destination_alias
         if destination_holder_name is not None:
