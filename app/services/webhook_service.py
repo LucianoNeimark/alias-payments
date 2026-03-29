@@ -41,10 +41,12 @@ def _event_response(row: dict) -> FundingEventResponse:
 async def process_talo_webhook(
     client: Client, payload: TaloWebhookPayload
 ) -> FundingEventResponse:
+    """Process a Talo webhook synchronously. Raises HTTPException on error."""
     existing = funding_event_repository.get_event_by_provider_event_id(
         client, payload.paymentId
     )
     if existing:
+        logger.info("talo webhook: duplicate event for paymentId=%s, returning existing", payload.paymentId)
         return _event_response(existing)
 
     order = funding_order_repository.get_order_by_provider_payment_id(
@@ -64,6 +66,11 @@ async def process_talo_webhook(
             detail="Funding order is not pending; cannot apply webhook",
         )
 
+    logger.info(
+        "talo webhook: fetching payment details from Talo for paymentId=%s order=%s",
+        payload.paymentId,
+        order_id,
+    )
     talo_payment = await talo_client.get_payment(payload.paymentId)
     talo_status = talo_payment.get("payment_status", "PENDING")
 
@@ -136,8 +143,37 @@ async def process_talo_webhook(
             ) from exc
         raise
 
+    logger.info(
+        "talo webhook: processed paymentId=%s order=%s status=%s received=%s credited=%s",
+        payload.paymentId,
+        order_id,
+        new_status.value,
+        received,
+        should_credit,
+    )
+
     refreshed = funding_event_repository.get_event_by_provider_event_id(
         client, payload.paymentId
     )
     assert refreshed is not None
     return _event_response(refreshed)
+
+
+async def process_talo_webhook_background(
+    client: Client, payload: TaloWebhookPayload
+) -> None:
+    """Background-safe wrapper: catches all errors and logs them instead of raising."""
+    try:
+        await process_talo_webhook(client, payload)
+    except HTTPException as exc:
+        logger.warning(
+            "talo webhook background: HTTP %s for paymentId=%s — %s",
+            exc.status_code,
+            payload.paymentId,
+            exc.detail,
+        )
+    except Exception:
+        logger.exception(
+            "talo webhook background: unhandled error processing paymentId=%s",
+            payload.paymentId,
+        )

@@ -28,5 +28,40 @@ register_balance(mcp)
 register_payments(mcp)
 register_agents(mcp)
 
+
+class _FixAcceptHeaderMiddleware:
+    """Inject Accept: application/json when the client omits it.
+
+    The MCP SDK rejects requests without a valid Accept header (406).
+    Some clients (e.g. ChatGPT) don't send it, so we default to
+    application/json to keep the server accessible.
+    """
+
+    _REQUIRED = {b"application/json", b"text/event-stream"}
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            headers = dict(scope.get("headers", []))
+            accept = headers.get(b"accept", b"")
+            if not any(ct in accept for ct in self._REQUIRED):
+                scope = dict(scope)
+                scope["headers"] = [
+                    (k, v) for k, v in scope["headers"] if k != b"accept"
+                ] + [(b"accept", b"application/json")]
+        await self.app(scope, receive, send)
+
+
 if __name__ == "__main__":
-    mcp.run(transport="streamable-http")
+    import uvicorn
+
+    app = mcp.streamable_http_app()
+    app = _FixAcceptHeaderMiddleware(app)
+
+    uvicorn.run(
+        app,
+        host=os.getenv("MCP_HOST", "0.0.0.0"),
+        port=int(os.getenv("PORT", os.getenv("MCP_PORT", "8001"))),
+    )
