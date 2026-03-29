@@ -193,7 +193,7 @@ def get_me_activity(
                 kind="payment_request",
                 id=p.id,
                 title=f"Payment — {p.purpose[:50]}{'…' if len(p.purpose) > 50 else ''}",
-                subtitle=str(p.destination_cvu),
+                subtitle=p.destination_cvu or p.destination_alias or "",
                 amount=p.amount,
                 currency=p.currency,
                 status=p.status,

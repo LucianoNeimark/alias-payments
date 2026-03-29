@@ -5,7 +5,7 @@ from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class PaymentRequestStatus(StrEnum):
@@ -24,11 +24,19 @@ class PaymentRequestCreate(BaseModel):
     agent_id: UUID
     amount: Decimal = Field(..., gt=0)
     currency: str = "ARS"
-    destination_cvu: str = Field(..., min_length=1)
-    destination_alias: str | None = None
+    destination_cvu: str | None = Field(default=None, min_length=1)
+    destination_alias: str | None = Field(default=None, min_length=1)
     destination_holder_name: str | None = None
     purpose: str = Field(..., min_length=1)
     idempotency_key: str = Field(..., min_length=1)
+
+    @model_validator(mode="after")
+    def require_cvu_or_alias(self) -> "PaymentRequestCreate":
+        if not self.destination_cvu and not self.destination_alias:
+            raise ValueError(
+                "Debe proporcionarse al menos uno de destination_cvu o destination_alias."
+            )
+        return self
 
 
 class PaymentRequestApprove(BaseModel):
@@ -54,7 +62,7 @@ class PaymentRequestResponse(BaseModel):
     wallet_id: UUID
     amount: Decimal
     currency: str
-    destination_cvu: str
+    destination_cvu: str | None
     destination_alias: str | None
     destination_holder_name: str | None
     purpose: str

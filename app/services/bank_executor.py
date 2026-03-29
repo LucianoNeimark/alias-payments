@@ -61,7 +61,7 @@ async def run_transfer(
         )
 
     # Real client: mock-only flags are ignored
-    alias = (destination_alias or "").strip() or destination_cvu.strip()
+    alias = (destination_alias or "").strip() or (destination_cvu or "").strip()
     if not alias:
         return BankTransferResult(
             success=False,

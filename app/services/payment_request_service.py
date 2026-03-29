@@ -93,7 +93,7 @@ def create_payment_request(
         if (
             str(existing.get("agent_id")) != str(payload.agent_id)
             or _decimal(existing.get("amount")) != payload.amount
-            or str(existing.get("destination_cvu")) != payload.destination_cvu
+            or existing.get("destination_cvu") != payload.destination_cvu
         ):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -247,7 +247,7 @@ def approve_payment_request(
 
     payout_data = PayoutCreateInternal(
         payment_request_id=UUID(order_id),
-        destination_cvu=str(row["destination_cvu"]),
+        destination_cvu=row.get("destination_cvu") or "",
         destination_alias=row.get("destination_alias"),
         amount=approved_amt,
         currency=str(row.get("currency") or "ARS"),
